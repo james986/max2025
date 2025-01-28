@@ -2,7 +2,6 @@
 <html>
 <head>
     <style>
-        /* 原有样式保持不变 */
         body {
             overflow: hidden;
             background: #000;
@@ -11,6 +10,15 @@
             align-items: center;
             height: 100vh;
             margin: 0;
+        }
+
+        /* 新增滚动容器 */
+        .marquee-container {
+            width: 100%;
+            overflow: hidden;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
         }
 
         .marquee {
@@ -24,7 +32,11 @@
             font-weight: bold;
         }
 
-        /* 新增播放按钮样式 */
+        @keyframes marquee {
+            from { transform: translateX(100%); }
+            to { transform: translateX(-100%); }
+        }
+
         #playButton {
             position: fixed;
             top: 20px;
@@ -38,6 +50,7 @@
             transition: all 0.3s;
             backdrop-filter: blur(5px);
             font-size: 14px;
+            z-index: 1000;
         }
 
         #playButton:hover {
@@ -45,20 +58,22 @@
             transform: scale(1.05);
         }
 
-        /* 加载提示样式 */
         .loader {
             position: fixed;
             top: 20px;
             left: 20px;
             color: white;
             font-size: 14px;
+            z-index: 1000;
         }
     </style>
 </head>
 <body>
     <div class="loader">🎵 音乐加载中...</div>
-    <button id="playButton">▶ 点击播放音乐</button>
-    <div class="marquee">🐷小猪，新年快乐！🎉 2025 勇敢做自己！🎊</div>
+    <button id="playButton">▶ 播放音乐</button>
+    <div class="marquee-container">
+        <div class="marquee">🐷小猪，新年快乐！🎉 2025 勇敢做自己！🎊</div>
+    </div>
     <audio id="audioPlayer" loop>
         <source src="https://vgmsite.com/soundtracks/gran-turismo-7-original-soundtrack-best-lap-vol.1-2023/mvlednhvfe/1-01.%20Nocturn%20%28GT7%20Opening%20Version%29.flac" type="audio/flac">
         您的浏览器不支持音频播放
@@ -70,52 +85,43 @@
             const playButton = document.getElementById('playButton');
             const loader = document.querySelector('.loader');
 
-            // 初始化隐藏按钮
             playButton.style.display = 'none';
 
-            // 音频加载完成后显示播放按钮
             audio.addEventListener('loadeddata', () => {
                 loader.style.display = 'none';
                 playButton.style.display = 'block';
             });
 
-            // 播放按钮点击处理
+            // 修复后的播放控制
             playButton.addEventListener('click', () => {
-                audio.play()
-                    .then(() => {
-                        playButton.innerHTML = '🎵 音乐播放中...';
-                        setTimeout(() => {
-                            playButton.style.opacity = '0.5';
-                            playButton.style.pointerEvents = 'none';
-                        }, 2000);
-                    })
-                    .catch(() => {
-                        playButton.innerHTML = '❌ 播放失败，点击重试';
-                    });
+                if (audio.paused) {
+                    audio.play()
+                        .then(() => {
+                            playButton.innerHTML = '⏸ 暂停音乐';
+                            playButton.style.opacity = '1';
+                        })
+                        .catch((error) => {
+                            console.error('播放失败:', error);
+                            playButton.innerHTML = '❌ 播放失败，点击重试';
+                        });
+                } else {
+                    audio.pause();
+                    playButton.innerHTML = '▶ 播放音乐';
+                }
             });
 
-            // 移动端触摸处理
+            // 优化移动端交互
             document.body.addEventListener('touchstart', () => {
                 if (audio.paused) {
                     audio.play();
-                    playButton.style.display = 'none';
+                    playButton.innerHTML = '⏸ 暂停音乐';
+                } else {
+                    audio.pause();
+                    playButton.innerHTML = '▶ 播放音乐';
                 }
-            }, { once: true });
+            }, { once: false });
 
-            // 自动播放尝试（部分浏览器支持）
-            const tryAutoPlay = () => {
-                audio.play()
-                    .then(() => {
-                        playButton.style.display = 'none';
-                        loader.style.display = 'none';
-                    })
-                    .catch(() => {
-                        playButton.style.display = 'block';
-                    });
-            }
-
-            // 延迟尝试自动播放
-            setTimeout(tryAutoPlay, 1000);
+            // 移除自动播放尝试（改为用户主动触发）
         });
     </script>
 </body>
