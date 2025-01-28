@@ -12,7 +12,6 @@
             margin: 0;
         }
 
-        /* 新增滚动容器 */
         .marquee-container {
             width: 100%;
             overflow: hidden;
@@ -87,12 +86,13 @@
 
             playButton.style.display = 'none';
 
+            // 音频加载完成后显示播放按钮
             audio.addEventListener('loadeddata', () => {
                 loader.style.display = 'none';
                 playButton.style.display = 'block';
             });
 
-            // 修复后的播放控制
+            // 播放按钮点击事件
             playButton.addEventListener('click', () => {
                 if (audio.paused) {
                     audio.play()
@@ -110,18 +110,8 @@
                 }
             });
 
-            // 优化移动端交互
-            document.body.addEventListener('touchstart', () => {
-                if (audio.paused) {
-                    audio.play();
-                    playButton.innerHTML = '⏸ 暂停音乐';
-                } else {
-                    audio.pause();
-                    playButton.innerHTML = '▶ 播放音乐';
-                }
-            }, { once: false });
-
-            // 移除自动播放尝试（改为用户主动触发）
+            // 移除移动端的 touchstart 事件监听器
+            // document.body.addEventListener('touchstart', () => {}, { once: false });
         });
     </script>
 </body>
