@@ -10,69 +10,41 @@
             align-items: center;
             height: 100vh;
             margin: 0;
-        }
-
-        .marquee-container {
-            width: 100%;
-            overflow: hidden;
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
+            cursor: pointer;
         }
 
         .marquee {
             white-space: nowrap;
             position: relative;
-            animation: marquee 15s linear infinite;
+            animation: marquee 15s linear infinite; /* 调慢滚动速度 */
             color: #ff69b4;
             font-family: 'Microsoft YaHei', sans-serif;
-            font-size: 6vw;
-            text-shadow: 2px 2px 8px rgba(255,105,180,0.7);
-            font-weight: bold;
+            font-size: 6vw; /* 放大字体 */
+            text-shadow: 2px 2px 8px rgba(255,105,180,0.7); /* 增强阴影 */
+            font-weight: bold; /* 加粗字体 */
         }
 
         @keyframes marquee {
-            from { transform: translateX(100%); }
-            to { transform: translateX(-100%); }
+            0%   { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
         }
 
-        #playButton {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            color: #fff;
-            padding: 8px 16px;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: all 0.3s;
-            backdrop-filter: blur(5px);
-            font-size: 14px;
-            z-index: 1000;
+        #audioPlayer {
+            display: none;
         }
 
-        #playButton:hover {
-            background: rgba(255, 105, 180, 0.5);
-            transform: scale(1.05);
-        }
-
+        /* 加载完成提示 */
         .loader {
+            color: white;
             position: fixed;
             top: 20px;
-            left: 20px;
-            color: white;
-            font-size: 14px;
-            z-index: 1000;
+            display: none;
         }
     </style>
 </head>
 <body>
-    <div class="loader">🎵 音乐加载中...</div>
-    <button id="playButton">▶ 播放音乐</button>
-    <div class="marquee-container">
-        <div class="marquee">🐷小猪，新年快乐！🎉 2025 勇敢做自己！🎊</div>
-    </div>
+    <div class="loader">加载中...</div>
+    <div class="marquee">🐷小猪，新年快乐！🎉 2025 勇敢做自己！🎊</div>
     <audio id="audioPlayer" loop>
         <source src="https://vgmsite.com/soundtracks/gran-turismo-7-original-soundtrack-best-lap-vol.1-2023/mvlednhvfe/1-01.%20Nocturn%20%28GT7%20Opening%20Version%29.flac" type="audio/flac">
         您的浏览器不支持音频播放
@@ -81,37 +53,44 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const audio = document.getElementById('audioPlayer');
-            const playButton = document.getElementById('playButton');
             const loader = document.querySelector('.loader');
+            
+            // 显示加载提示
+            loader.style.display = 'block';
 
-            playButton.style.display = 'none';
-
-            // 音频加载完成后显示播放按钮
-            audio.addEventListener('loadeddata', () => {
-                loader.style.display = 'none';
-                playButton.style.display = 'block';
+            // 自动播放尝试
+            const playPromise = audio.play().catch(error => {
+                // 如果自动播放被阻止
+                loader.textContent = '点击任意位置播放音乐';
+                loader.style.display = 'block';
+                
+                // 点击后播放
+                document.body.addEventListener('click', () => {
+                    audio.play();
+                    loader.style.display = 'none';
+                }, { once: true });
             });
 
-            // 播放按钮点击事件
-            playButton.addEventListener('click', () => {
+            // 成功播放后隐藏提示
+            if (playPromise) {
+                playPromise.then(() => {
+                    loader.style.display = 'none';
+                });
+            }
+
+            // 移动端触摸支持
+            document.body.addEventListener('touchstart', () => {
                 if (audio.paused) {
-                    audio.play()
-                        .then(() => {
-                            playButton.innerHTML = '⏸ 暂停音乐';
-                            playButton.style.opacity = '1';
-                        })
-                        .catch((error) => {
-                            console.error('播放失败:', error);
-                            playButton.innerHTML = '❌ 播放失败，点击重试';
-                        });
-                } else {
-                    audio.pause();
-                    playButton.innerHTML = '▶ 播放音乐';
+                    audio.play();
+                    loader.style.display = 'none';
                 }
-            });
+            }, { once: true });
 
-            // 移除移动端的 touchstart 事件监听器
-            // document.body.addEventListener('touchstart', () => {}, { once: false });
+            // 预加载优化
+            audio.preload = 'auto';
+            audio.onloadeddata = () => {
+                loader.style.display = 'none';
+            };
         });
     </script>
 </body>
